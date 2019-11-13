@@ -1,13 +1,12 @@
-type Nullable                             = null | undefined;
-type Predicate<T>                         = (T) => boolean;
-type Unwrapper<T, U>                      = (T) => U;
-type SideEffectsFunction<T>               = (T) => any;
+type Predicate<T>                         = (t: T) => boolean;
+type Unwrapper<T, U>                      = (t: T) => U;
+type SideEffectsFunction<T>               = (t: T) => any;
 type NullaryValueFactory<U>               = ()  => U;
-type TransformationFunction<T, U>         = (T) => U;
-type NullableTransformationFunction<T, U> = (T) => U | Nullable;
+type TransformationFunction<T, U>         = (t: T) => U;
+type NullableTransformationFunction<T, U> = (t: T) => U;
 
 interface OptionalMembers {
-  isOptionalInstance: true;
+  isOptionalInstance: boolean;
   valuePresent:       boolean;
   valueAbsent:        boolean;
 }
@@ -21,153 +20,152 @@ interface ParsedOptional<T> extends OptionalMembers {
   value?: T;
 }
 
-export interface Optional<T> extends OptionalMembers {
-  nullableMap<U>(λ: NullableTransformationFunction<T, U>): Optional<U>;
-  or<U>(replacement: (() => Optional<U>) | Optional<U>):   Optional<T> | Optional<U>;
-  match<U, V>(clauses: OptionalMatchClauses<T, U, V>):     U | V;
-  transform<U>(λ: TransformationFunction<T, U>):           Optional<U>;
-  map<U>(λ: TransformationFunction<T, U>):                 Optional<U>;
-  recover<U>(λ: NullaryValueFactory<U>):                   Optional<U>;
-  optionalProperty<U>(property: string):                   Optional<U>;
-  nullableProperty<U>(property: string):                   Optional<U>;
-  flatMap<U>(λ: (T) => Optional<U>):                       Optional<U>;
-  tap(λ: SideEffectsFunction<T>):                          Optional<T>;
-  property<U>(property: string):                           Optional<U>;
-  getOrElse<U>(replacement: U):                            T | U;
-  satisfies(λ: Predicate<T>):                              boolean;
-  valueEquals<U>(value: U):                                boolean;
-  filter(λ: Predicate<T>):                                 Optional<T>;
-  reject(λ: Predicate<T>):                                 Optional<T>;
-  get(message?: string):                                   T;
-  replace<U>(value: U):                                    Optional<U>;
+interface OptionalType<T> extends OptionalMembers {
+  nullableMap<U>(λ: NullableTransformationFunction<T, U>):       OptionalType<U>;
+  or<U>(replacement: (() => OptionalType<U>) | OptionalType<U>): OptionalType<T> | OptionalType<U>;
+  match<U, V>(clauses: OptionalMatchClauses<T, U, V>):           U | V;
+  transform<U>(λ: TransformationFunction<T, U>):                 OptionalType<U>;
+  map<U>(λ: TransformationFunction<T, U>):                       OptionalType<U>;
+  recover<U>(λ: NullaryValueFactory<U>):                         OptionalType<U>;
+  optionalProperty<U>(property: string):                         OptionalType<U>;
+  nullableProperty<U>(property: string):                         OptionalType<U>;
+  flatMap<U>(λ: (t: T) => OptionalType<U>):                      OptionalType<U>;
+  tap(λ: SideEffectsFunction<T>):                                OptionalType<T>;
+  property<U>(property: string):                                 OptionalType<U>;
+  getOrElse<U>(replacement: U):                                  T | U;
+  satisfies(λ: Predicate<T>):                                    boolean;
+  valueEquals<U>(value: U):                                      boolean;
+  filter(λ: Predicate<T>):                                       OptionalType<T>;
+  reject(λ: Predicate<T>):                                       OptionalType<T>;
+  get(message?: string):                                         T;
+  replace<U>(value: U):                                          OptionalType<U>;
 }
 
-type OptionalTransformer<T, U> = (optional: Optional<T>) => U;
-type OptionalMatcher<T, U, V>  = (optional: Optional<T>) => U | V;
-type BindFunction<T, U>        = (T) => Optional<U>;
+type OptionalTransformer<T, U> = (optional: OptionalType<T>) => U;
+type OptionalMatcher<T, U, V>  = (optional: OptionalType<T>) => U | V;
+type BindFunction<T, U>        = (t: T) => OptionalType<U>;
 
-type OptionalMapper<T, U> = OptionalTransformer<T, Optional<U>>;
+type OptionalMapper<T, U> = OptionalTransformer<T, OptionalType<U>>;
 
-interface OptionalModule {
-  <T>(): Optional<T>;
+export namespace Optional {
+  export function Some<T>(value: T): OptionalType<T>;
+  export function None():            OptionalType<any>;
 
-  Some<T>(value: T): Optional<T>;
-  None<T>():         Optional<T>;
+  export function fromParsedJson<T>(parsedJson: ParsedOptional<T>): OptionalType<T>;
+  export function first(optionals: OptionalType<any>[]):            OptionalType<any>;
+  export function all(optionals: OptionalType<any>[]):              OptionalType<any[]>;
+  export function fromNullable<T>(value?: T):                       OptionalType<T>;
+  export function when<T>(truthy: any, value: T):                   OptionalType<T>;
 
-  fromParsedJson<T>(parsedJson: ParsedOptional<T>): Optional<T>;
-  first(optionals: Optional<any>[]):          Optional<any>;
-  all(optionals: Optional<any>[]):            Optional<any[]>;
-  fromNullable<T>(value: T | Nullable):             Optional<T>;
-  when<T>(truthy: any, value: T):                   Optional<T>;
-
-  nullableMap<T, U>(λ: NullableTransformationFunction<T, U>): OptionalMapper<T, U>;
-  nullableMap<T, U>(
+  export function nullableMap<T, U>(λ: NullableTransformationFunction<T, U>): OptionalMapper<T, U>;
+  export function nullableMap<T, U>(
     λ:        NullableTransformationFunction<T, U>,
-    optional: Optional<T>
+    optional: OptionalType<T>
   ): Optional<U>;
 
-  match<T, U, V>(clauses: OptionalMatchClauses<T, U, V>): OptionalMatcher<T, U, V>;
-  match<T, U, V>(
+  export function match<T, U, V>(clauses: OptionalMatchClauses<T, U, V>): OptionalMatcher<T, U, V>;
+  export function match<T, U, V>(
     clauses:  OptionalMatchClauses<T, U, V>,
-    optional: Optional<T>
-  ): Optional<U>;
+    optional: OptionalType<T>
+  ): OptionalType<U>;
 
-  transform<T, U>(λ: TransformationFunction<T, U>): OptionalMapper<T, U>;
-  transform<T, U>(
+  export function transform<T, U>(λ: TransformationFunction<T, U>): OptionalMapper<T, U>;
+  export function transform<T, U>(
     λ:        TransformationFunction<T, U>,
-    optional: Optional<T>
-  ): Optional<U>;
+    optional: OptionalType<T>
+  ): OptionalType<U>;
 
-  map<T, U>(λ: TransformationFunction<T, U>): OptionalMapper<T, U>;
-  map<T, U>(
+  export function map<T, U>(λ: TransformationFunction<T, U>): OptionalMapper<T, U>;
+  export function map<T, U>(
     λ:        TransformationFunction<T, U>,
-    optional: Optional<T>
-  ): Optional<U>;
+    optional: OptionalType<T>
+  ): OptionalType<U>;
 
-  recover<T, U>(λ: NullaryValueFactory<U>): OptionalMapper<T, U>;
-  recover<T, U>(
+  export function recover<T, U>(λ: NullaryValueFactory<U>): OptionalMapper<T, U>;
+  export function recover<T, U>(
     λ:        NullaryValueFactory<U>,
-    optional: Optional<T>
-  ): Optional<U>;
+    optional: OptionalType<T>
+  ): OptionalType<U>;
 
-  optionalProperty<T, U>(property: string): OptionalMapper<T, U>;
-  optionalProperty<T, U>(
+  export function optionalProperty<T, U>(property: string): OptionalMapper<T, U>;
+  export function optionalProperty<T, U>(
     property: string,
-    optional: Optional<T>
-  ): Optional<U>;
+    optional: OptionalType<T>
+  ): OptionalType<U>;
 
-  nullableProperty<T, U>(property: string): OptionalMapper<T, U>;
-  nullableProperty<T, U>(
+  export function nullableProperty<T, U>(property: string): OptionalMapper<T, U>;
+  export function nullableProperty<T, U>(
     property: string,
-    optional: Optional<T>
-  ): Optional<U>;
+    optional: OptionalType<T>
+  ): OptionalType<U>;
 
-  property<T, U>(property: string): OptionalMapper<T, U>;
-  property<T, U>(
+  export function property<T, U>(property: string): OptionalMapper<T, U>;
+  export function property<T, U>(
     property: string,
-    optional: Optional<T>
-  ): Optional<U>;
+    optional: OptionalType<T>
+  ): OptionalType<U>;
 
-  flatMap<T, U>(λ: BindFunction<T, U>): OptionalMapper<T, U>;
-  flatMap<T, U>(
+  export function flatMap<T, U>(λ: BindFunction<T, U>): OptionalMapper<T, U>;
+  export function flatMap<T, U>(
     λ:        BindFunction<T, U>,
-    optional: Optional<T>
-  ): Optional<U>;
+    optional: OptionalType<T>
+  ): OptionalType<U>;
 
-  tap<T>(λ: SideEffectsFunction<T>): OptionalMapper<T, T>;
-  tap<T>(
+  export function tap<T>(λ: SideEffectsFunction<T>): OptionalMapper<T, T>;
+  export function tap<T>(
     λ:        SideEffectsFunction<T>,
-    optional: Optional<T>
-  ): Optional<T>;
+    optional: OptionalType<T>
+  ): OptionalType<T>;
 
-  or<T, U>(replacement: (() => Optional<U>) | Optional<U>): OptionalMapper<T, U>;
-  or<T, U>(
-    replacement: (() => Optional<U>) | Optional<U>,
-    optional:    Optional<T>
-  ): Optional<U>;
+  export function or<T, U>(replacement: (() => OptionalType<U>) | OptionalType<U>): OptionalMapper<T, U>;
+  export function or<T, U>(
+    replacement: (() => OptionalType<U>) | OptionalType<U>,
+    optional:    OptionalType<T>
+  ): OptionalType<U>;
 
-  getOrElse<T, U>(replacement: U): OptionalTransformer<T, T | U>;
-  getOrElse<T, U>(
+  export function getOrElse<T, U>(replacement: U): OptionalTransformer<T, T | U>;
+  export function getOrElse<T, U>(
     replacement: U,
-    optional:    Optional<T>
+    optional:    OptionalType<T>
   ): T | U;
 
-  satisfies<T>(predicate: Predicate<T>): OptionalTransformer<T, boolean>;
-  satisfies<T>(
+  export function satisfies<T>(predicate: Predicate<T>): OptionalTransformer<T, boolean>;
+  export function satisfies<T>(
     predicate: Predicate<T>,
-    optional:  Optional<T>
+    optional:  OptionalType<T>
   ): boolean;
 
-  valueEquals<T, U>(value: U): OptionalTransformer<T, boolean>;
-  valueEquals<T, U>(
+  export function valueEquals<T, U>(value: U): OptionalTransformer<T, boolean>;
+  export function valueEquals<T, U>(
     value:     U,
-    optional:  Optional<T>
+    optional:  OptionalType<T>
   ): boolean;
 
-  filter<T>(predicate: Predicate<T>): OptionalMapper<T, T>;
-  filter<T>(
+  export function filter<T>(predicate: Predicate<T>): OptionalMapper<T, T>;
+  export function filter<T>(
     predicate: Predicate<T>,
-    optional:  Optional<T>
-  ): Optional<T>;
+    optional:  OptionalType<T>
+  ): OptionalType<T>;
 
-  reject<T>(predicate: Predicate<T>): OptionalMapper<T, T>;
-  reject<T>(
+  export function reject<T>(predicate: Predicate<T>): OptionalMapper<T, T>;
+  export function reject<T>(
     predicate: Predicate<T>,
-    optional:  Optional<T>
-  ): Optional<T>;
+    optional:  OptionalType<T>
+  ): OptionalType<T>;
 
-  get<T>(message: string): OptionalTransformer<T, T>;
-  get<T>(
+  export function get<T>(message: string): OptionalTransformer<T, T>;
+  export function get<T>(
     message:   string,
-    optional:  Optional<T>
+    optional:  OptionalType<T>
   ): OptionalTransformer<T, T>;
 
-  replace<T, U>(replacement: U): OptionalMapper<T, U>;
-  replace<T, U>(
+  export function replace<T, U>(replacement: U): OptionalMapper<T, U>;
+  export function replace<T, U>(
     replacement: U,
-    optional:    Optional<T>
-  ): Optional<T>;
+    optional:    OptionalType<T>
+  ): OptionalType<T>;
 }
 
-export declare const Result:   any;
-export declare const Optional: OptionalModule;
+export type Optional<T> = OptionalType<T>;
+export type Result      = any;
+

@@ -4,7 +4,7 @@
   "description": "Optional and Result monads implementations",
   "main": "index.js",
   "scripts": {
-    "test": "node ./node_modules/.bin/mocha"
+    "test": "node ./node_modules/.bin/mocha && tsc --noEmit -p ."
   },
   "keywords": [
     "option",
@@ -24,7 +24,8 @@
     "eslint": "^5.10.0",
     "eslint-config-airbnb": "^15.0.2",
     "eslint-plugin-import": "^2.14.0",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "typescript": "^3.7.2"
   },
   "dependencies": {
     "helpbox": "^7.2.0",
